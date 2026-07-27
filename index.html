@@ -928,36 +928,27 @@ function handleXlsxUpload(event){
       }
 
       // ── Channels: rows channelStart+2 onwards until cfStart ──
-      // Col layout: B=#(1), C=name(2), D=tool(3), E=reach(4), F=freq(5), G=af(6), H=spend(7)
+      // Exact columns: B=#(1), C=name(2), D=tool(3), E=reach(4), F=freq(5), G=af(6), H=spend(7)
       const channels = [];
       for (let i = channelStart + 2; i < cfStart; i++) {
         const r = rows[i]; if (!r) continue;
-        // Find name: first string in row that isn't a header
-        let name = null, tool = '', reach = null, freq = null, af = null, spend = null;
-        let nums = [];
-        for (let c = 0; c < r.length; c++) {
-          if (typeof r[c] === 'string' && r[c].trim() &&
-              !['#','Channel Name','Channel','Tool','Reach %','Freq','Attn Factor','Investment','Notes','Source'].includes(r[c].trim())) {
-            if (!name) name = r[c].trim();
-            else if (!tool) tool = r[c].trim();
-          }
-          if (typeof r[c] === 'number') nums.push({col:c, val:r[c]});
-        }
-        if (!name || name.toLowerCase().includes('total') || name === '#') continue;
-        // reach is first number <1, freq is first number >1 and <20, af is second number <1, spend is large number
-        const smallNums = nums.filter(n => n.val > 0 && n.val < 1);
-        const midNums   = nums.filter(n => n.val >= 1 && n.val < 30);
-        const bigNums   = nums.filter(n => n.val >= 1000);
-        reach = smallNums.length > 0 ? smallNums[0].val : null;
-        freq  = midNums.length  > 0 ? midNums[0].val  : 1;
-        af    = smallNums.length > 1 ? smallNums[1].val : 0.5;
-        spend = bigNums.length  > 0 ? bigNums[bigNums.length-1].val : 0;
-        if (reach === null) continue;
+        const name = r[2];
+        if (!name || typeof name !== 'string' || name.trim() === '' || name.toLowerCase().includes('total') || name === '#' || name === 'Channel Name' || name === 'Channel') continue;
+        const reach = r[4], freq = r[5], af = r[6], spend = r[7];
+        if (typeof reach !== 'number') continue;
         const nm = name.toLowerCase();
         let isCtv = false;
         if (nm.includes('fta') || nm.includes('svod')) isCtv = true;
         else if (nm.includes('bvod')) isCtv = 'partial';
-        channels.push({ name, tool, reach, freq, af, spend, isCtv });
+        channels.push({
+          name:  name.trim(),
+          tool:  r[3] ? String(r[3]).trim() : '',
+          reach: reach,
+          freq:  typeof freq  === 'number' ? freq  : 1,
+          af:    typeof af    === 'number' ? af    : 0.5,
+          spend: typeof spend === 'number' ? spend : 0,
+          isCtv
+        });
       }
       if (channels.length === 0) throw new Error('No channel rows found. Check the channel section of the Inputs sheet.');
 
