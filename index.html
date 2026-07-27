@@ -863,14 +863,26 @@ function handleXlsxUpload(event){
       if (!ws) throw new Error('No "Inputs" sheet found. Make sure your Excel has an "Inputs" tab.');
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
 
-      // Find section headers by scanning ALL columns in each row
+      // Find section headers — scan every cell in every row (handles merged cells)
       let universeStart = -1, channelStart = -1, cfStart = -1;
       rows.forEach((r, i) => {
-        const rowText = r.map(c => c ? String(c) : '').join(' ');
-        if (rowText.includes('Audience Universes'))   universeStart = i;
-        if (rowText.includes('Channel-Level') || rowText.includes('Channel Level')) channelStart = i;
-        if (rowText.includes('Scenario Correlation')) cfStart = i;
+        // Check both the row array and raw sheet cells for merged cell content
+        const rowText = (Array.isArray(r) ? r : []).map(c => c != null ? String(c) : '').join(' ');
+        if (rowText.includes('Audience Universes'))                        universeStart = i;
+        if (rowText.includes('Channel-Level') || rowText.includes('Channel Level') || rowText.includes('Channel-level')) channelStart = i;
+        if (rowText.includes('Scenario Correlation'))                      cfStart = i;
       });
+
+      // Fallback: scan raw sheet object for merged cell values SheetJS may have missed
+      if (universeStart < 0 || channelStart < 0 || cfStart < 0) {
+        Object.keys(ws).filter(k => !k.startsWith('!')).forEach(addr => {
+          const val = ws[addr].v != null ? String(ws[addr].v) : '';
+          const rowIdx = parseInt(addr.replace(/[A-Z]/g,'')) - 1;
+          if (val.includes('Audience Universes'))                          universeStart = rowIdx;
+          if (val.includes('Channel-Level') || val.includes('Channel Level')) channelStart = rowIdx;
+          if (val.includes('Scenario Correlation'))                        cfStart = rowIdx;
+        });
+      }
 
       if (universeStart < 0 || channelStart < 0 || cfStart < 0)
         throw new Error('Could not find expected sections in the Inputs sheet. Make sure the sheet structure matches the template.');
