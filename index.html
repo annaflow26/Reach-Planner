@@ -863,13 +863,13 @@ function handleXlsxUpload(event){
       if (!ws) throw new Error('No "Inputs" sheet found. Make sure your Excel has an "Inputs" tab.');
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
 
-      // Find section headers by scanning column B (index 1)
+      // Find section headers by scanning ALL columns in each row
       let universeStart = -1, channelStart = -1, cfStart = -1;
       rows.forEach((r, i) => {
-        const b = r[1] ? String(r[1]).trim() : '';
-        if (b.includes('Audience Universes'))    universeStart = i;
-        if (b.includes('Channel-Level'))         channelStart  = i;
-        if (b.includes('Scenario Correlation'))  cfStart       = i;
+        const rowText = r.map(c => c ? String(c) : '').join(' ');
+        if (rowText.includes('Audience Universes'))   universeStart = i;
+        if (rowText.includes('Channel-Level') || rowText.includes('Channel Level')) channelStart = i;
+        if (rowText.includes('Scenario Correlation')) cfStart = i;
       });
 
       if (universeStart < 0 || channelStart < 0 || cfStart < 0)
