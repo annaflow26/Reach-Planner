@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Omni-Channel Reach & Effective Exposure</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ink:#1F3864; --ink2:#2E75B6; --bg:#F7F8FB; --card:#FFFFFF;
+  --mute:#6B7280; --line:#E5E7EB; --accent:#C00000; --ctv:#7030A0;
+  --cons:#E6A23C; --cent:#2E75B6; --opt:#27AE60;
+  --raw:#9CA3AF; --q:#C00000;
+  --yellow:#FFF4C2;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter','Segoe UI',Arial,sans-serif;background:var(--bg);color:#111;line-height:1.45}
+header{background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%);color:#fff;padding:28px 40px}
+header h1{margin:0 0 6px 0;font-size:26px;font-weight:700}
+header .sub{opacity:.85;font-size:13px}
+header .sub strong{color:#FFD966}
+main{max-width:1300px;margin:0 auto;padding:24px 40px 80px}
+.controls{display:flex;gap:16px;flex-wrap:wrap;margin:20px 0 28px 0}
+.control{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.control label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);font-weight:600}
+.pill-group{display:inline-flex;background:#EEF2F7;border-radius:999px;padding:3px;gap:3px}
+.pill{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;color:var(--mute);background:transparent;border:none;font-family:inherit}
+.pill.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.grid{display:grid;gap:20px}
+.grid.top{grid-template-columns:repeat(4,1fr);margin-bottom:20px}
+.grid.two{grid-template-columns:1fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.card h3{margin:0 0 6px 0;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+.card .metric{font-size:26px;font-weight:700;color:var(--ink);margin:6px 0 2px}
+.card .metric small{font-size:13px;font-weight:500;color:var(--mute);margin-left:4px}
+.card .metric.accent{color:var(--accent)}
+.card .foot{font-size:12px;color:var(--mute);margin-top:4px}
+.card .delta{font-size:12px;font-weight:600;color:var(--accent);margin-top:4px}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.chart-card h2{margin:0 0 4px 0;font-size:16px;color:var(--ink)}
+.chart-card .hint{font-size:12px;color:var(--mute);margin-bottom:10px}
+.chart-wrap{position:relative;height:360px}
+.headline{background:var(--yellow);border:1px solid #E5C84A;border-radius:12px;padding:18px 22px;margin-bottom:24px;font-size:15px;line-height:1.55}
+.headline .lead{color:var(--accent);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.06em;display:block;margin-bottom:4px}
+.headline strong{color:var(--ink)}
+.ctv-banner{background:linear-gradient(135deg,#7030A0 0%,#5B2178 100%);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px}
+.ctv-banner .cb-title{grid-column:1/-1;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.85;margin-bottom:-10px}
+.ctv-banner .cb-item .label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.8}
+.ctv-banner .cb-item .val{font-size:22px;font-weight:700;margin-top:4px}
+.ctv-banner .cb-item .sub{font-size:12px;opacity:.7;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child,td.l,th.l{text-align:left;font-weight:500}
+thead th{background:#F3F6FA;color:var(--ink);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+tr.total td{background:#F7F8FB;font-weight:700;color:var(--ink)}
+tr.ctv-row td{background:#F5EFFA}
+tr.ctv-row td:first-child::before{content:"CTV ";display:inline-block;background:var(--ctv);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;margin-right:6px;letter-spacing:.04em}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mute);margin-top:8px;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.legend .c::before{background:var(--cons)}
+.legend .m::before{background:var(--cent)}
+.legend .o::before{background:var(--opt)}
+.legend .r::before{background:var(--raw)}
+.legend .qq::before{background:var(--q)}
+.af-chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;font-family:ui-monospace,monospace}
+.af-high{background:#D1E7DD;color:#0A3622}
+.af-mid{background:#FFF3CD;color:#664D03}
+.af-low{background:#F8D7DA;color:#58151C}
+/* ===== Settings panel & Upload ===== */
+.header-btns{display:flex;gap:8px;flex-shrink:0;margin-top:4px}
+.upload-btn{background:#FFD966;border:none;color:#1F3864;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;}
+.upload-btn:hover{opacity:.88}
+#xlsxInput{display:none}
+.upload-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;border-radius:10px;padding:12px 22px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.upload-toast.show{opacity:1}
+.upload-toast.error{background:#C00000}
+.settings-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:background .15s}
+.settings-btn:hover{background:rgba(255,255,255,0.25)}
+header{display:flex;align-items:flex-start;justify-content:space-between}
+.header-left h1{margin:0 0 6px 0;font-size:26px;font-weight:700}
+.header-left .sub{opacity:.85;font-size:13px}
+.header-left .sub strong{color:#FFD966}
+#settingsOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:flex-start;justify-content:flex-end}
+#settingsOverlay.open{display:flex}
+#settingsDrawer{background:#fff;width:460px;max-width:95vw;height:100vh;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.15);display:flex;flex-direction:column}
+.drawer-header{background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%);color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-header h2{margin:0;font-size:17px;font-weight:700}
+.drawer-header p{margin:4px 0 0;font-size:12px;opacity:.8}
+.drawer-close{background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.drawer-close:hover{background:rgba(255,255,255,0.3)}
+.drawer-body{padding:24px;flex:1}
+.drawer-section{margin-bottom:28px}
+.drawer-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:12px}
+.aud-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.aud-row{display:grid;grid-template-columns:1fr 140px 36px;gap:8px;align-items:center}
+.aud-row input{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;color:#111;width:100%}
+.aud-row input:focus{outline:none;border-color:var(--ink2);box-shadow:0 0 0 3px rgba(46,117,182,0.12)}
+.aud-row input.num{text-align:right}
+.aud-row .del-btn{background:#FEE2E2;border:none;color:#DC2626;border-radius:7px;width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.aud-row .del-btn:hover{background:#FECACA}
+.aud-row-labels{display:grid;grid-template-columns:1fr 140px 36px;gap:8px;margin-bottom:4px}
+.aud-row-labels span{font-size:11px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.add-btn{background:#EEF2F7;border:1px dashed #CBD5E1;color:var(--ink);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;text-align:left}
+.add-btn:hover{background:#E2E8F0}
+.apply-btn{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+.apply-btn:hover{background:var(--ink2)}
+.drawer-tip{background:#F0F7FF;border:1px solid #BFDBFE;border-radius:8px;padding:12px 14px;font-size:12px;color:#1E40AF;line-height:1.5;margin-bottom:16px}
+.fmt-hint{font-size:11px;color:var(--mute);margin-top:6px}
+footer{color:var(--mute);font-size:12px;padding:20px 40px;border-top:1px solid var(--line);background:#fff}
+.footnote{font-size:12px;color:var(--mute);margin-top:6px;font-style:italic}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:30px 0 10px 0}
+#loadingMsg{text-align:center;padding:80px 40px;font-size:16px;color:var(--mute)}
+#errorMsg{display:none;text-align:center;padding:60px 40px;color:var(--accent);font-size:15px}
+#appContent{display:none}
+.data-source-badge{display:inline-flex;align-items:center;gap:6px;background:#EEF2F7;border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--mute);margin-left:12px}
+.data-source-badge strong{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Omni-Channel Reach &amp; Effective Exposure</h1>
+    <div class="sub">Sainsbury build + <strong>Nelson-Field attention layer</strong> · CTV big-screen split · <strong id="hdrBudget">—</strong> net working media</div>
+  </div>
+  <div class="header-btns">
+    <input type="file" id="xlsxInput" accept=".xlsx" onchange="handleXlsxUpload(event)">
+    <button class="upload-btn" onclick="document.getElementById('xlsxInput').click()">📂 Load Excel</button>
+    <button class="settings-btn" onclick="openSettings()">⚙️ Audiences</button>
+  </div>
+</header>
+<div class="upload-toast" id="uploadToast"></div>
+
+<!-- Settings overlay + drawer -->
+<div id="settingsOverlay" onclick="overlayClick(event)">
+  <div id="settingsDrawer">
+    <div class="drawer-header">
+      <div>
+        <h2>Audience Settings</h2>
+        <p>Add, rename, or remove audience segments</p>
+      </div>
+      <button class="drawer-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-tip">
+        Changes apply to the audience toggle at the top of the dashboard. Universe size is the total number of people in that audience (e.g. 21,300,000 for P18+).
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Audience Segments</div>
+        <div class="aud-row-labels">
+          <span>Label (shown on toggle)</span>
+          <span>Universe size</span>
+          <span></span>
+        </div>
+        <div class="aud-list" id="audList"></div>
+        <button class="add-btn" onclick="addAudRow()">+ Add audience segment</button>
+        <div class="fmt-hint">Enter universe as a whole number e.g. 21300000 for 21.3M</div>
+      </div>
+      <button class="apply-btn" onclick="applyAudiences()">Apply changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="loadingMsg">Loading model data from <code>data.json</code>…</div>
+<div id="errorMsg">
+  ⚠️ Could not load <code>data.json</code>.<br><br>
+  Make sure <code>data.json</code> is in the <strong>same folder</strong> as this HTML file,<br>
+  then open the dashboard via a local server (e.g. <code>python3 -m http.server</code>) or GitHub Pages.<br><br>
+  <small>When opening directly as a file:// URL, browsers block local JSON fetches for security.<br>
+  Use VS Code Live Server, Python http.server, or deploy to GitHub Pages.</small>
+</div>
+
+<div id="appContent">
+<main>
+
+  <div class="controls">
+    <div class="control">
+      <label>Audience</label>
+      <div class="pill-group" id="audPills"></div>
+    </div>
+    <div class="control">
+      <label>Scenario view</label>
+      <div class="pill-group" id="scenPills">
+        <button class="pill" data-scen="cons">Conservative</button>
+        <button class="pill active" data-scen="cent">Central</button>
+        <button class="pill" data-scen="opt">Optimistic</button>
+      </div>
+    </div>
+    <div class="control">
+      <label>BVOD CTV share</label>
+      <div class="pill-group" id="ctvShareToggle">
+        <button class="pill" data-bvod="50">50%</button>
+        <button class="pill active" data-bvod="70">70%</button>
+        <button class="pill" data-bvod="100">100%</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="headline" class="headline">
+    <span class="lead">Nelson-Field adjusted headline</span>
+    <span id="headlineText"></span>
+  </div>
+
+  <div class="ctv-banner">
+    <div class="cb-title">CTV Big-Screen Ecosystem — ads watched on the TV screen</div>
+    <div class="cb-item"><div class="label">CTV Impressions</div><div class="val" id="ctvImp">—</div><div class="sub" id="ctvImpShare">— of plan</div></div>
+    <div class="cb-item"><div class="label">Blended CTV Attention Factor</div><div class="val" id="ctvAF">—</div><div class="sub">FTA TV + SVOD-CTV + BVOD-CTV</div></div>
+    <div class="cb-item"><div class="label">Effective Exposures</div><div class="val" id="ctvEff">—</div><div class="sub" id="ctvEffShare">— of total eff exposures</div></div>
+    <div class="cb-item"><div class="label">Cost Share (CTV investment)</div><div class="val" id="ctvSpend">—</div><div class="sub" id="ctvSpendShare">— of budget</div></div>
+  </div>
+
+  <div class="grid top">
+    <div class="card">
+      <h3>Raw Reach (1+)</h3>
+      <div class="metric" id="mRawReach">—</div>
+      <div class="foot">Classic Sainsbury net reach</div>
+    </div>
+    <div class="card">
+      <h3>qReach (Attention-Adjusted)</h3>
+      <div class="metric accent" id="mQReach">—</div>
+      <div class="delta" id="mDelta">—</div>
+    </div>
+    <div class="card">
+      <h3>Eff Exposure per Person</h3>
+      <div class="metric" id="mEEP">—</div>
+      <div class="foot">Effective exposures among reached</div>
+    </div>
+    <div class="card">
+      <h3>Attention-Adjusted CPM</h3>
+      <div class="metric accent" id="mCPMa">—</div>
+      <div class="foot">Raw CPM <span id="mCPMr"></span> · AF <span id="mBlendedAF"></span></div>
+    </div>
+  </div>
+
+  <div class="section-label">Not all reach is equal — the attention discount</div>
+
+  <div class="grid two" style="margin-bottom:20px">
+    <div class="chart-card">
+      <h2>Reach Build: Raw vs qReach</h2>
+      <div class="hint">Cumulative reach as channels are layered in. qReach = Sainsbury on reach × Attention Factor — the people the plan actually reaches with attention.</div>
+      <div class="chart-wrap"><canvas id="reachCurve"></canvas></div>
+      <div class="legend"><span class="r">Raw Reach (Central)</span><span class="qq">qReach (Central)</span></div>
+    </div>
+    <div class="chart-card">
+      <h2>qReach @ k+ Effective Exposures</h2>
+      <div class="hint">Distribution of quality-adjusted reach at attention-weighted exposure thresholds.</div>
+      <div class="chart-wrap"><canvas id="freqCurve"></canvas></div>
+      <div class="legend"><span class="c">Conservative</span><span class="m">Central</span><span class="o">Optimistic</span></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px">
+    <h2>Channel Inputs — Reach, Attention &amp; Effective Exposures</h2>
+    <div class="hint" id="channelHint">SVOD-CTV (Netflix Basic w/ Ads, Prime Ads, Binge Basic) modelled separately at AF 0.90. BVOD AF device-weighted. Purple rows are big-screen video.</div>
+    <table id="channelTable">
+      <thead>
+        <tr>
+          <th class="l">Channel</th><th class="l">Tool</th>
+          <th>Reach %</th><th>Freq</th><th>Attn Factor</th>
+          <th>Impressions</th><th>Eff Exposures</th><th>Investment</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot></tfoot>
+    </table>
+  </div>
+
+  <div class="grid two" style="margin-bottom:20px">
+    <div class="chart-card">
+      <h2>Quality Drop by Channel</h2>
+      <div class="hint">How much of each channel's raw reach survives the attention filter.</div>
+      <div class="chart-wrap"><canvas id="qDropChart"></canvas></div>
+      <div class="legend"><span class="r">Raw channel reach</span><span class="qq">qReach (reach × AF)</span></div>
+    </div>
+    <div class="chart-card">
+      <h2>Scenario Comparison (Raw vs qReach)</h2>
+      <div class="hint">Conservative / Central / Optimistic correlation factors applied to both builds.</div>
+      <div class="chart-wrap"><canvas id="scenChart"></canvas></div>
+      <div class="legend"><span class="r">Raw Reach</span><span class="qq">qReach</span></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Effective Exposure — Detail Table</h2>
+    <div class="hint">All three scenarios for the selected audience. k+ thresholds are effective exposures (attention-weighted), not raw frequency counts.</div>
+    <table id="freqTable">
+      <thead>
+        <tr>
+          <th class="l">Scenario</th>
+          <th>Raw Reach</th><th>qReach</th><th>EEP̄</th>
+          <th>qReach @ 1+</th><th>qReach @ 2+</th><th>qReach @ 3+</th><th>qReach @ 5+</th><th>qReach @ 10+</th>
+          <th>People @ 3+</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="footnote">Modelled estimate, not a measurement. qReach@k+ = qReach × (1 − 1/EEP̄)^(k−1), a planner-grade geometric-survival approximation.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div style="margin-bottom:10px">
+    <a href="./reach_frequency_model.xlsx" download style="color:#2E75B6;font-weight:600;text-decoration:underline">⬇ Download the full Excel model (.xlsx)</a> — 6 tabs, ~489 live formulas, flex any input
+  </div>
+  <div style="margin-bottom:6px">
+    <strong>To update this dashboard:</strong> Edit the Excel Inputs tab → run <code>python3 extract_data.py</code> → refresh this page.
+  </div>
+  Sources: ABS National, State &amp; Territory Population (Sep 2025) · Roy Morgan Single Source (MGB norms) · VOZ device-share (BVOD CTV split) · ThinkTV / OMA / IAB cross-media benchmark series · Karen Nelson-Field, Amplified Intelligence (aSTAR attention benchmarks) · "The Attention Economy and How Media Works".
+</footer>
+</div><!-- /appContent -->
+
+<script>
+// ========== State ==========
+let state = { aud: null, scen:"cent" };
+let BVOD_CTV_SHARE = 0.70;
+let MODEL = null;
+let AUDIENCES = []; // [{key, label, universe}]
+
+const SCEN_LABEL = { cons:"Conservative", cent:"Central", opt:"Optimistic" };
+const SCEN_COLOR = { cons:"#E6A23C", cent:"#2E75B6", opt:"#27AE60" };
+const EK = [1,2,3,5,10];
+
+// ========== Formatters ==========
+const fmtPct  = v => (v*100).toFixed(1) + "%";
+const fmtPctR = v => Math.round(v*100) + "%";
+const fmtK    = v => v >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"k";
+const fmt$    = v => "$" + v.toLocaleString('en-AU',{maximumFractionDigits:0});
+const fmt$2   = v => "$" + v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtM    = v => (v/1_000_000).toFixed(1)+"M";
+
+// ========== BVOD AF helper ==========
+function bvodBlendedAF(share){
+  return share * MODEL.bvod.af_ctv + (1 - share) * MODEL.bvod.af_other;
+}
+
+function getChannels(){
+  // Returns channels array with live BVOD AF
+  return MODEL.channels.map(c => {
+    if (c.isCtv === "partial") {
+      return {...c, af: bvodBlendedAF(BVOD_CTV_SHARE)};
+    }
+    return {...c, af: c.af !== null ? c.af : bvodBlendedAF(BVOD_CTV_SHARE)};
+  });
+}
+
+// ========== Build functions ==========
+function sainsburyCurve(values, cfs){
+  let r = 0, curve = [];
+  values.forEach((v, i) => {
+    if (i === 0) r = v;
+    else {
+      const cf = cfs[i] !== null ? cfs[i] : 1;
+      const s = r + v - r * v;
+      r = s * cf;
+    }
+    curve.push(r);
+  });
+  return curve;
+}
+
+function freqCurve(qR, eep){
+  return EK.map(k => eep > 1 ? qR * Math.pow(1 - 1/eep, k-1) : (k===1 ? qR : 0));
+}
+
+let computed = {};
+
+function recompute(){
+  const CHANNELS = getChannels();
+  const rawReaches = CHANNELS.map(c=>c.reach);
+  const qReaches   = CHANNELS.map(c=>c.reach * c.af);
+
+  const curves = {
+    raw_cons: sainsburyCurve(rawReaches, MODEL.cf.cons),
+    raw_cent: sainsburyCurve(rawReaches, MODEL.cf.cent),
+    raw_opt:  sainsburyCurve(rawReaches, MODEL.cf.opt),
+    q_cons:   sainsburyCurve(qReaches,   MODEL.cf.cons),
+    q_cent:   sainsburyCurve(qReaches,   MODEL.cf.cent),
+    q_opt:    sainsburyCurve(qReaches,   MODEL.cf.opt),
+  };
+  const finals = {
+    raw: {cons:curves.raw_cons.at(-1), cent:curves.raw_cent.at(-1), opt:curves.raw_opt.at(-1)},
+    q:   {cons:curves.q_cons.at(-1),   cent:curves.q_cent.at(-1),   opt:curves.q_opt.at(-1)},
+  };
+
+  const totalGRPs    = CHANNELS.reduce((a,c)=>a + c.reach*c.freq*100, 0);
+  const totalEffExp  = CHANNELS.reduce((a,c)=>a + c.reach*c.freq*c.af*100, 0);
+  const totalSpend   = CHANNELS.reduce((a,c)=>a + c.spend, 0);
+  const blendedAF    = totalEffExp / totalGRPs;
+
+  const eeps = {
+    cons: totalEffExp / (finals.q.cons * 100),
+    cent: totalEffExp / (finals.q.cent * 100),
+    opt:  totalEffExp / (finals.q.opt  * 100),
+  };
+
+  const freqCurves = {
+    cons: freqCurve(finals.q.cons, eeps.cons),
+    cent: freqCurve(finals.q.cent, eeps.cent),
+    opt:  freqCurve(finals.q.opt,  eeps.opt),
+  };
+
+  computed = { CHANNELS, curves, finals, totalGRPs, totalEffExp, totalSpend, blendedAF, eeps, freqCurves };
+}
+
+function totalImps(audKey){
+  const uni = getUniverse(audKey);
+  return computed.CHANNELS.reduce((a,c)=>a + uni*c.reach*c.freq, 0);
+}
+function totalEffExpUnits(audKey){
+  const uni = getUniverse(audKey);
+  return computed.CHANNELS.reduce((a,c)=>a + uni*c.reach*c.freq*c.af, 0);
+}
+
+function ctvRollup(audKey){
+  const uni = getUniverse(audKey);
+  let totImp=0, totEff=0, totSpend=0;
+  computed.CHANNELS.forEach(c => {
+    if (c.isCtv === true){
+      const imp = uni*c.reach*c.freq;
+      totImp += imp; totEff += imp*c.af; totSpend += c.spend;
+    } else if (c.isCtv === "partial"){
+      const imp = uni*c.reach*c.freq*BVOD_CTV_SHARE;
+      totImp += imp; totEff += imp*MODEL.bvod.af_ctv; totSpend += c.spend*BVOD_CTV_SHARE;
+    }
+  });
+  return { imp:totImp, eff:totEff, spend:totSpend, af: totImp ? totEff/totImp : 0 };
+}
+
+// ========== Charts (initialised once, updated on recompute) ==========
+let reachChart, freqChart, qDropChart, scenChart;
+
+function initCharts(){
+  const { curves, finals, freqCurves, CHANNELS } = computed;
+
+  const baseOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:true,position:'bottom',labels:{font:{size:11}}},
+              tooltip:{callbacks:{label:ctx=>ctx.dataset.label+": "+fmtPct(ctx.parsed.y)}}},
+    scales:{ y:{ticks:{callback:v=>Math.round(v*100)+"%"}, suggestedMin:0, suggestedMax:1}}
+  };
+
+  reachChart = new Chart(document.getElementById('reachCurve'), {
+    type:'line',
+    data:{
+      labels: CHANNELS.map(c=>c.name),
+      datasets:[
+        {label:'Raw Reach', data:curves.raw_cent, borderColor:'#9CA3AF', backgroundColor:'rgba(156,163,175,0.15)', tension:0.25, borderWidth:3, pointRadius:4, fill:false, borderDash:[6,4]},
+        {label:'qReach',    data:curves.q_cent,   borderColor:'#C00000', backgroundColor:'rgba(192,0,0,0.15)',   tension:0.25, borderWidth:3, pointRadius:5, fill:true},
+      ]
+    },
+    options: baseOpts
+  });
+
+  freqChart = new Chart(document.getElementById('freqCurve'), {
+    type:'bar',
+    data:{
+      labels: EK.map(k=>k+"+"),
+      datasets:[
+        {label:'Conservative', data:freqCurves.cons, backgroundColor:SCEN_COLOR.cons},
+        {label:'Central',      data:freqCurves.cent, backgroundColor:SCEN_COLOR.cent},
+        {label:'Optimistic',   data:freqCurves.opt,  backgroundColor:SCEN_COLOR.opt},
+      ]
+    },
+    options:{...baseOpts, scales:{...baseOpts.scales, x:{title:{display:true,text:'Effective exposure threshold'}}}}
+  });
+
+  qDropChart = new Chart(document.getElementById('qDropChart'), {
+    type:'bar',
+    data:{
+      labels: CHANNELS.map(c=>c.name),
+      datasets:[
+        {label:'Raw Reach',         data: CHANNELS.map(c=>c.reach),      backgroundColor:'#9CA3AF'},
+        {label:'qReach (reach×AF)', data: CHANNELS.map(c=>c.reach*c.af), backgroundColor:'#C00000'},
+      ]
+    },
+    options:{...baseOpts, indexAxis:'y', scales:{x:{ticks:{callback:v=>Math.round(v*100)+"%"}, suggestedMin:0, suggestedMax:0.8}, y:{ticks:{font:{size:11}}}}}
+  });
+
+  scenChart = new Chart(document.getElementById('scenChart'), {
+    type:'bar',
+    data:{
+      labels:['Conservative','Central','Optimistic'],
+      datasets:[
+        {label:'Raw Reach', data:[finals.raw.cons, finals.raw.cent, finals.raw.opt], backgroundColor:'#9CA3AF'},
+        {label:'qReach',    data:[finals.q.cons,   finals.q.cent,   finals.q.opt],   backgroundColor:'#C00000'},
+      ]
+    },
+    options: baseOpts
+  });
+}
+
+function refreshCharts(){
+  const { curves, finals, freqCurves, CHANNELS } = computed;
+  reachChart.data.labels = CHANNELS.map(c=>c.name);
+  reachChart.data.datasets[0].data = curves.raw_cent;
+  reachChart.data.datasets[1].data = curves.q_cent;
+  reachChart.update();
+  freqChart.data.datasets[0].data = freqCurves.cons;
+  freqChart.data.datasets[1].data = freqCurves.cent;
+  freqChart.data.datasets[2].data = freqCurves.opt;
+  freqChart.update();
+  qDropChart.data.labels = CHANNELS.map(c=>c.name);
+  qDropChart.data.datasets[0].data = CHANNELS.map(c=>c.reach);
+  qDropChart.data.datasets[1].data = CHANNELS.map(c=>c.reach*c.af);
+  qDropChart.update();
+  scenChart.data.datasets[0].data = [finals.raw.cons, finals.raw.cent, finals.raw.opt];
+  scenChart.data.datasets[1].data = [finals.q.cons,   finals.q.cent,   finals.q.opt];
+  scenChart.update();
+}
+
+// ========== Renderers ==========
+function renderTopCards(){
+  const audLabel = (AUDIENCES.find(a => a.key === state.aud) || AUDIENCES[0]).label;
+  const rawR = computed.finals.raw[state.scen];
+  const qR   = computed.finals.q[state.scen];
+  const eep  = computed.eeps[state.scen];
+  const uni  = getUniverse(state.aud);
+  document.getElementById('mRawReach').innerHTML = fmtPct(rawR) + " <small>of "+audLabel+"</small>";
+  document.getElementById('mQReach').innerHTML   = fmtPct(qR)   + " <small>of "+audLabel+"</small>";
+  document.getElementById('mDelta').textContent  = `${Math.round((1-qR/rawR)*100)}% attention discount · ${fmtK(rawR*uni - qR*uni)} fewer people actually reached with attention`;
+  document.getElementById('mEEP').innerHTML      = eep.toFixed(1) + "<small>x eff exposures</small>";
+  const cpmRaw  = computed.totalSpend / (totalImps(state.aud)/1000);
+  const cpmAttn = computed.totalSpend / (totalEffExpUnits(state.aud)/1000);
+  document.getElementById('mCPMa').textContent   = fmt$2(cpmAttn);
+  document.getElementById('mCPMr').textContent   = fmt$2(cpmRaw);
+  document.getElementById('mBlendedAF').textContent = computed.blendedAF.toFixed(2);
+}
+
+function renderCtvBanner(){
+  const roll   = ctvRollup(state.aud);
+  const totImp = totalImps(state.aud);
+  const totEff = totalEffExpUnits(state.aud);
+  document.getElementById('ctvImp').textContent      = fmtK(roll.imp);
+  document.getElementById('ctvImpShare').textContent = fmtPct(roll.imp/totImp) + " of plan impressions";
+  document.getElementById('ctvAF').textContent       = roll.af.toFixed(2);
+  document.getElementById('ctvEff').textContent      = fmtK(roll.eff);
+  document.getElementById('ctvEffShare').textContent = fmtPct(roll.eff/totEff) + " of total effective exposures";
+  document.getElementById('ctvSpend').textContent    = fmt$(roll.spend);
+  document.getElementById('ctvSpendShare').textContent = fmtPct(roll.spend/computed.totalSpend) + " of budget";
+}
+
+function renderHeadline(){
+  const audObj  = AUDIENCES.find(a => a.key === state.aud) || AUDIENCES[0];
+  const audLabel = audObj.label;
+  const uni   = audObj.universe;
+  const qLo   = computed.finals.q.cons * uni;
+  const qHi   = computed.finals.q.opt  * uni;
+  const cpmAttn = computed.totalSpend / (totalEffExpUnits(state.aud)/1000);
+  const roll  = ctvRollup(state.aud);
+  const totEff = totalEffExpUnits(state.aud);
+  const totImp = totalImps(state.aud);
+  document.getElementById('headlineText').innerHTML =
+    `This plan is estimated to deliver <strong>${fmtPctR(computed.finals.q.cons)}–${fmtPctR(computed.finals.q.opt)}</strong> ` +
+    `quality-adjusted reach of ${audLabel} (vs ${fmtPctR(computed.finals.raw.cent)} raw reach, ` +
+    `a <strong>${Math.round((1-computed.finals.q.cent/computed.finals.raw.cent)*100)}%</strong> attention discount). ` +
+    `That's <strong>${fmtK(qLo)}–${fmtK(qHi)}</strong> people reached with actual attention, ` +
+    `at an attention-adjusted CPM of <strong>${fmt$2(cpmAttn)}</strong>. ` +
+    `The CTV big-screen ecosystem (FTA + SVOD-CTV + BVOD-CTV) is <strong>${fmtPctR(roll.imp/totImp)}</strong> ` +
+    `of impressions but drives <strong>${fmtPctR(roll.eff/totEff)}</strong> of effective exposures at AF <strong>${roll.af.toFixed(2)}</strong>.`;
+}
+
+function renderChannelTable(){
+  const tbody = document.querySelector('#channelTable tbody');
+  const tfoot = document.querySelector('#channelTable tfoot');
+  const uni   = getUniverse(state.aud);
+  const { CHANNELS } = computed;
+  let totSpend=0, totImp=0, totEff=0;
+  tbody.innerHTML = CHANNELS.map(c => {
+    const imp = uni*c.reach*c.freq;
+    const eff = imp*c.af;
+    totSpend += c.spend; totImp += imp; totEff += eff;
+    const afClass = c.af >= 0.8 ? 'af-high' : c.af >= 0.4 ? 'af-mid' : 'af-low';
+    const rowClass = (c.isCtv === true || c.isCtv === "partial") ? 'ctv-row' : '';
+    return `<tr class="${rowClass}">
+      <td class="l">${c.name}</td>
+      <td class="l" style="color:#6B7280;font-size:12px">${c.tool}</td>
+      <td>${Math.round(c.reach*100)}%</td>
+      <td>${c.freq.toFixed(1)}x</td>
+      <td><span class="af-chip ${afClass}">${c.af.toFixed(2)}</span></td>
+      <td>${fmtK(imp)}</td>
+      <td>${fmtK(eff)}</td>
+      <td>${fmt$(c.spend)}</td>
+    </tr>`;
+  }).join('');
+  tfoot.innerHTML = `<tr class="total">
+    <td class="l">Total Plan</td><td></td><td>—</td><td>—</td>
+    <td>${computed.blendedAF.toFixed(2)}</td>
+    <td>${fmtK(totImp)}</td>
+    <td>${fmtK(totEff)}</td>
+    <td>${fmt$(totSpend)}</td>
+  </tr>`;
+}
+
+function renderFreqTable(){
+  const tbody = document.querySelector('#freqTable tbody');
+  const uni   = getUniverse(state.aud);
+  tbody.innerHTML = ['cons','cent','opt'].map(s => {
+    const row = computed.freqCurves[s];
+    const p3  = row[2] * uni;
+    return `<tr>
+      <td class="l"><strong>${SCEN_LABEL[s]}</strong></td>
+      <td>${fmtPct(computed.finals.raw[s])}</td>
+      <td style="color:var(--accent);font-weight:600">${fmtPct(computed.finals.q[s])}</td>
+      <td>${computed.eeps[s].toFixed(1)}x</td>
+      ${row.map(v=>`<td>${fmtPct(v)}</td>`).join('')}
+      <td>${fmtK(p3)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildAudiencesFromModel(){
+  // Convert MODEL.universes object into AUDIENCES array
+  AUDIENCES = Object.entries(MODEL.universes).map(([key, universe]) => ({
+    key,
+    label: key === 'p18' ? 'P18+' : key === 'mgb' ? 'MGB 25–54' : key,
+    universe
+  }));
+  if (!state.aud || !AUDIENCES.find(a => a.key === state.aud)) {
+    state.aud = AUDIENCES[0].key;
+  }
+}
+
+function renderAudPills(){
+  const container = document.getElementById('audPills');
+  container.innerHTML = AUDIENCES.map(a =>
+    `<button class="pill${state.aud === a.key ? ' active' : ''}" data-aud="${a.key}">
+      ${a.label} <span style="opacity:.7">(${fmtM(a.universe)})</span>
+    </button>`
+  ).join('');
+  container.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => {
+    state.aud = p.dataset.aud; renderAll();
+  }));
+}
+
+function getUniverse(audKey){
+  const a = AUDIENCES.find(x => x.key === audKey);
+  return a ? a.universe : 0;
+}
+
+function updatePillLabels(){
+  document.getElementById('hdrBudget').textContent = fmt$(computed.totalSpend);
+  renderAudPills();
+}
+
+function renderAll(){
+  renderAudPills();
+  document.querySelectorAll('#scenPills .pill').forEach(p => p.classList.toggle('active', p.dataset.scen === state.scen));
+  document.querySelectorAll('#ctvShareToggle .pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.bvod) === Math.round(BVOD_CTV_SHARE*100)));
+  renderTopCards();
+  renderCtvBanner();
+  renderHeadline();
+  renderChannelTable();
+  renderFreqTable();
+}
+
+// ========== Event listeners ==========
+document.querySelectorAll('#scenPills .pill').forEach(p => p.addEventListener('click', () => { state.scen = p.dataset.scen; renderAll(); }));
+document.querySelectorAll('#ctvShareToggle .pill').forEach(p => p.addEventListener('click', () => {
+  BVOD_CTV_SHARE = parseInt(p.dataset.bvod) / 100;
+  recompute(); refreshCharts(); renderAll();
+}));
+
+// ========== Settings panel ==========
+function openSettings(){
+  renderAudList();
+  document.getElementById('settingsOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSettings(){
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function overlayClick(e){
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+
+function renderAudList(){
+  const list = document.getElementById('audList');
+  list.innerHTML = AUDIENCES.map((a, i) => `
+    <div class="aud-row" data-idx="${i}">
+      <input type="text" class="aud-label" value="${a.label}" placeholder="Audience label">
+      <input type="number" class="aud-universe num" value="${a.universe}" placeholder="e.g. 21300000" min="1">
+      <button class="del-btn" onclick="deleteAudRow(${i})" title="Remove"${AUDIENCES.length <= 1 ? ' disabled style="opacity:.4;cursor:not-allowed"' : ''}>✕</button>
+    </div>
+  `).join('');
+}
+
+function addAudRow(){
+  AUDIENCES.push({ key: 'aud_' + Date.now(), label: '', universe: 1000000 });
+  renderAudList();
+}
+
+function deleteAudRow(idx){
+  if (AUDIENCES.length <= 1) return;
+  AUDIENCES.splice(idx, 1);
+  if (!AUDIENCES.find(a => a.key === state.aud)) state.aud = AUDIENCES[0].key;
+  renderAudList();
+}
+
+function applyAudiences(){
+  const rows = document.querySelectorAll('#audList .aud-row');
+  let valid = true;
+  rows.forEach((row, i) => {
+    const label = row.querySelector('.aud-label').value.trim();
+    const universe = parseInt(row.querySelector('.aud-universe').value);
+    if (!label || isNaN(universe) || universe < 1) { valid = false; return; }
+    AUDIENCES[i].label = label;
+    AUDIENCES[i].universe = universe;
+    // Keep MODEL.universes in sync
+    MODEL.universes[AUDIENCES[i].key] = universe;
+  });
+  if (!valid) {
+    alert('Please fill in all audience labels and valid universe sizes.');
+    return;
+  }
+  closeSettings();
+  renderAll();
+}
+
+// ========== Bootstrap: fetch data.json ==========
+const _INLINE_DATA = {
+  "universes": {
+    "p18": 21300000.0,
+    "mgb": 6200000.0
+  },
+  "bvod": {
+    "ctv_share": 0.7,
+    "af_ctv": 0.87,
+    "af_other": 0.5
+  },
+  "channels": [
+    {
+      "name": "OOH",
+      "tool": "MOVE 2.0",
+      "reach": 0.6933,
+      "freq": 14.44,
+      "af": 0.5,
+      "spend": 1700000.0,
+      "isCtv": false
+    },
+    {
+      "name": "FTA TV",
+      "tool": "Day8",
+      "reach": 0.35,
+      "freq": 8.18,
+      "af": 1.0,
+      "spend": 2000000.0,
+      "isCtv": true
+    },
+    {
+      "name": "SVOD-CTV (ad-tier)",
+      "tool": "Netflix/Prime/Binge",
+      "reach": 0.1444,
+      "freq": 3.37,
+      "af": 0.9,
+      "spend": 300000.0,
+      "isCtv": true
+    },
+    {
+      "name": "BVOD (device-weighted)",
+      "tool": "Day8 / VOZ",
+      "reach": 0.15,
+      "freq": 4.04,
+      "af": 0.759,
+      "spend": 400000.0,
+      "isCtv": "partial"
+    },
+    {
+      "name": "Radio",
+      "tool": "Commercial Radio Aus",
+      "reach": 0.33,
+      "freq": 11.56,
+      "af": 0.45,
+      "spend": 450000.0,
+      "isCtv": false
+    },
+    {
+      "name": "YouTube",
+      "tool": "DSP planner / Google",
+      "reach": 0.337,
+      "freq": 5.78,
+      "af": 0.6,
+      "spend": 250000.0,
+      "isCtv": false
+    },
+    {
+      "name": "Digital Social",
+      "tool": "DSP planner",
+      "reach": 0.3852,
+      "freq": 7.7,
+      "af": 0.25,
+      "spend": 500000.0,
+      "isCtv": false
+    },
+    {
+      "name": "Audio (Streaming/Pod)",
+      "tool": "DSP / Spotify Ad Studio",
+      "reach": 0.1733,
+      "freq": 5.3,
+      "af": 0.35,
+      "spend": 400000.0,
+      "isCtv": false
+    }
+  ],
+  "cf": {
+    "cons": [
+      null,
+      null,
+      0.92,
+      0.85,
+      0.86,
+      0.86,
+      0.88,
+      0.86,
+      0.9
+    ],
+    "cent": [
+      null,
+      null,
+      0.95,
+      0.88,
+      0.9,
+      0.9,
+      0.92,
+      0.9,
+      0.93
+    ],
+    "opt": [
+      null,
+      null,
+      0.97,
+      0.92,
+      0.93,
+      0.93,
+      0.95,
+      0.93,
+      0.96
+    ]
+  }
+};
+  // ========== Excel upload ==========
+function showToast(msg, isError=false){
+  const t = document.getElementById('uploadToast');
+  t.textContent = msg;
+  t.className = 'upload-toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'upload-toast', 3500);
+}
+
+function handleXlsxUpload(event){
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+
+      // ---- Inputs sheet ----
+      const ws = wb.Sheets['Inputs'];
+      if (!ws) throw new Error('No "Inputs" sheet found. Make sure your Excel has an "Inputs" tab.');
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+      // Find section headers by scanning all cells in each row
+      let universeStart = -1, bvodStart = -1, channelStart = -1, cfStart = -1;
+      rows.forEach((r, i) => {
+        const rowText = (r||[]).map(c => c != null ? String(c) : '').join(' ');
+        if (rowText.includes('SECTION 1') || rowText.includes('Audience Universes')) universeStart = i;
+        if (rowText.includes('SECTION 2') || rowText.includes('BVOD Device'))        bvodStart = i;
+        if (rowText.includes('SECTION 3') || rowText.includes('Channel Input') || rowText.includes('Channel-Level')) channelStart = i;
+        if (rowText.includes('SECTION 4') || rowText.includes('Scenario Correlation') || rowText.includes('Correlation Factor')) cfStart = i;
+      });
+
+      if (universeStart < 0 || channelStart < 0 || cfStart < 0)
+        throw new Error('Could not find expected sections. Make sure you are using the correct template with an Inputs sheet.');
+
+      const bvodBoundary = bvodStart > 0 ? bvodStart : channelStart;
+
+      // ── Audiences: rows between universeStart+2 and bvod section ──
+      // Each row: col B=label(1), col C=universe(2)
+      // Scan entire row for safety — label=first string >3 chars, universe=first number >10000
+      const universes = {};
+      for (let i = universeStart + 2; i < bvodBoundary; i++) {
+        const r = rows[i]; if (!r) continue;
+        const rowText = (r||[]).map(c => c != null ? String(c) : '').join(' ');
+        if (rowText.includes('Label') || rowText.includes('Audience Label') || rowText.includes('←')) continue;
+        let label = null, val = null;
+        for (let c = 0; c < r.length; c++) {
+          if (!label && typeof r[c] === 'string' && r[c].trim().length > 2 &&
+              !['Audience','Universe','Source','Notes','people','Label'].some(w => r[c].trim() === w))
+            label = r[c].trim();
+          if (val === null && typeof r[c] === 'number' && r[c] > 10000)
+            val = r[c];
+        }
+        if (label && val !== null) {
+          const key = label.toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,12) || ('aud'+i);
+          universes[key] = { label, universe: val };
+        }
+      }
+      if (Object.keys(universes).length === 0) throw new Error('No audience universes found. Check rows 3-4 of the Inputs sheet.');
+
+      // ── BVOD device mix ──
+      // Rows after bvodStart+2: col B=device(1), col C=share(2), col D=AF(3)
+      let bvod = { ctv_share: 0.7, af_ctv: 0.87, af_other: 0.5 };
+      const bvodSearchEnd = bvodStart > 0 ? channelStart : channelStart;
+      for (let i = (bvodStart > 0 ? bvodStart+2 : universeStart+2); i < bvodSearchEnd; i++) {
+        const r = rows[i]; if (!r) continue;
+        // Find label in row by scanning
+        let rowLabel = '';
+        for (let c = 0; c < r.length; c++) { if (typeof r[c] === 'string') { rowLabel = r[c].toLowerCase(); break; } }
+        let share = null, af = null;
+        let numCount = 0;
+        for (let c = 0; c < r.length; c++) {
+          if (typeof r[c] === 'number' && r[c] > 0 && r[c] <= 1) {
+            if (numCount === 0) share = r[c];
+            if (numCount === 1) af = r[c];
+            numCount++;
+          }
+        }
+        if ((rowLabel.includes('ctv') || rowLabel.includes('big screen')) && share !== null) {
+          bvod.ctv_share = share; if (af !== null) bvod.af_ctv = af;
+        }
+        if ((rowLabel.includes('laptop') || rowLabel.includes('mobile')) && af !== null) {
+          bvod.af_other = af;
+        }
+      }
+
+      // ── Channels: rows channelStart+2 onwards until cfStart ──
+      // Col layout: B=#(1), C=name(2), D=tool(3), E=reach(4), F=freq(5), G=af(6), H=spend(7)
+      const channels = [];
+      for (let i = channelStart + 2; i < cfStart; i++) {
+        const r = rows[i]; if (!r) continue;
+        // Find name: first string in row that isn't a header
+        let name = null, tool = '', reach = null, freq = null, af = null, spend = null;
+        let nums = [];
+        for (let c = 0; c < r.length; c++) {
+          if (typeof r[c] === 'string' && r[c].trim() &&
+              !['#','Channel Name','Channel','Tool','Reach %','Freq','Attn Factor','Investment','Notes','Source'].includes(r[c].trim())) {
+            if (!name) name = r[c].trim();
+            else if (!tool) tool = r[c].trim();
+          }
+          if (typeof r[c] === 'number') nums.push({col:c, val:r[c]});
+        }
+        if (!name || name.toLowerCase().includes('total') || name === '#') continue;
+        // reach is first number <1, freq is first number >1 and <20, af is second number <1, spend is large number
+        const smallNums = nums.filter(n => n.val > 0 && n.val < 1);
+        const midNums   = nums.filter(n => n.val >= 1 && n.val < 30);
+        const bigNums   = nums.filter(n => n.val >= 1000);
+        reach = smallNums.length > 0 ? smallNums[0].val : null;
+        freq  = midNums.length  > 0 ? midNums[0].val  : 1;
+        af    = smallNums.length > 1 ? smallNums[1].val : 0.5;
+        spend = bigNums.length  > 0 ? bigNums[bigNums.length-1].val : 0;
+        if (reach === null) continue;
+        const nm = name.toLowerCase();
+        let isCtv = false;
+        if (nm.includes('fta') || nm.includes('svod')) isCtv = true;
+        else if (nm.includes('bvod')) isCtv = 'partial';
+        channels.push({ name, tool, reach, freq, af, spend, isCtv });
+      }
+      if (channels.length === 0) throw new Error('No channel rows found. Check the channel section of the Inputs sheet.');
+
+      // ── Correlation factors: rows cfStart+2 onwards ──
+      // Row cfStart+2 = col headers, cfStart+3 = first data row (Base — always null)
+      // CF values: first three numbers in the row after the channel name
+      const cfData = { cons:[null, null], cent:[null, null], opt:[null, null] };
+      for (let i = cfStart + 3; i < cfStart + 3 + (channels.length - 1); i++) {
+        const r = rows[i]; if (!r) { cfData.cons.push(null); cfData.cent.push(null); cfData.opt.push(null); continue; }
+        const nums = [];
+        for (let c = 0; c < r.length; c++) {
+          if (typeof r[c] === 'number' && r[c] > 0 && r[c] <= 1) nums.push(r[c]);
+        }
+        cfData.cons.push(nums[0] != null ? nums[0] : null);
+        cfData.cent.push(nums[1] != null ? nums[1] : null);
+        cfData.opt.push( nums[2] != null ? nums[2] : null);
+      }
+
+      // ── Build MODEL ──
+      const newModel = {
+        universes: Object.fromEntries(Object.entries(universes).map(([k,v])=>[k, v.universe])),
+        bvod, channels, cf: cfData
+      };
+      MODEL = newModel;
+      BVOD_CTV_SHARE = MODEL.bvod.ctv_share;
+
+      // Rebuild audiences from new model, preserving labels from parsed data
+      AUDIENCES = Object.entries(universes).map(([key, v]) => ({
+        key, label: v.label, universe: v.universe
+      }));
+      state.aud = AUDIENCES[0].key;
+
+      // Sync BVOD toggle
+      document.querySelectorAll('#ctvShareToggle .pill').forEach(p => {
+        const v = parseInt(p.dataset.bvod) / 100;
+        p.classList.toggle('active', Math.abs(v - BVOD_CTV_SHARE) < 0.01);
+      });
+
+      recompute();
+      updatePillLabels();
+      refreshCharts();
+      renderAll();
+      showToast('✓ Excel loaded — ' + channels.length + ' channels, ' + AUDIENCES.length + ' audiences');
+    } catch(err) {
+      showToast('⚠ ' + err.message, true);
+      console.error(err);
+    }
+    // Reset so same file can be re-uploaded
+    event.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+Promise.resolve(_INLINE_DATA)
+  .then(data => {
+    MODEL = data;
+    // Sync BVOD_CTV_SHARE to whatever is in the JSON
+    BVOD_CTV_SHARE = MODEL.bvod.ctv_share;
+    // Sync the BVOD CTV share toggle pill to match
+    document.querySelectorAll('#ctvShareToggle .pill').forEach(p => {
+      const v = parseInt(p.dataset.bvod) / 100;
+      p.classList.toggle('active', Math.abs(v - BVOD_CTV_SHARE) < 0.01);
+    });
+
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('appContent').style.display = 'block';
+
+    buildAudiencesFromModel();
+    recompute();
+    updatePillLabels();
+    initCharts();
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('errorMsg').style.display = 'block';
+    console.error("Failed to load data.json:", err);
+  });
+</script>
+
+</body>
+</html>
